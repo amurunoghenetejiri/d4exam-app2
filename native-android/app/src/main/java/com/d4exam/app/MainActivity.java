@@ -13,13 +13,13 @@ import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 
 /**
- * D4EXAM MainActivity — Capacitor WebView application (not Chrome).
+ * D4EXAM MainActivity — Capacitor WebView (100% local-first).
  *
- * Online: loads https://d4exam.name.ng inside this WebView so login and all
- * routes work. Offline: errorPath offline.html still inside the WebView.
+ * Loads bundled SPA from webDir=dist via https://localhost.
+ * NO server.url — remote URL breaks offline boot and severs the Capacitor bridge.
  *
  * BridgeWebViewClient keeps D4EXAM / Supabase / Firebase in-app (never Chrome).
- * Plugins: ExamImmersive, ScreenShare (MediaProjection), Capgo biometric, push.
+ * Plugins: ExamImmersive, ScreenShare (MediaProjection), D4NativeAuth, Capgo biometric.
  */
 public class MainActivity extends BridgeActivity {
   @Override
