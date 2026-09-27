@@ -8,12 +8,14 @@ on:
       - "native-android/**"
       - "capacitor.config.*"
       - "scripts/prepare-capacitor-dist.mjs"
+      - "scripts/force-local-capacitor-assets.py"
       - "scripts/android-apply-icons.sh"
       - "public/offline.html"
       - "public/icon-512.png"
       - "public/logo.png"
       - "package.json"
       - "bun.lock"
+      - "src/**"
       - ".github/workflows/build-android.yml"
 
 concurrency:
@@ -122,6 +124,10 @@ jobs:
 
           cp -f native-android/app/src/main/res/values/colors.xml "$VALS/" 2>/dev/null || true
           cp -f native-android/app/src/main/res/values/styles.xml "$VALS/" 2>/dev/null || true
+          if [ -d native-android/app/src/main/res/values-v31 ]; then
+            mkdir -p android/app/src/main/res/values-v31
+            cp -f native-android/app/src/main/res/values-v31/styles.xml android/app/src/main/res/values-v31/ 2>/dev/null || true
+          fi
 
           chmod +x scripts/android-apply-icons.sh || true
           bash scripts/android-apply-icons.sh || echo "WARN: icon script failed (non-fatal)"
@@ -175,7 +181,6 @@ jobs:
             cat android/variables.gradle
           fi
 
-
       - name: Add androidx.biometric for D4NativeAuth
         run: |
           set -euo pipefail
@@ -216,9 +221,10 @@ jobs:
           python3 scripts/ensure-capacitor-plugins.py
           if [ -f android/app/build.gradle ]; then
             sed -i 's/versionCode [0-9]*/versionCode 45/' android/app/build.gradle || true
-            sed -i 's/versionName "[^"]*"/versionName "1.4.5-native-bridge-fixed"/' android/app/build.gradle || true
-            echo "OK: versionName 1.4.5-native-bridge-fixed"
+            sed -i 's/versionName "[^"]*"/versionName "1.4.5-offline-native"/' android/app/build.gradle || true
+            echo "OK: versionName 1.4.5-offline-native"
           fi
+          # CRITICAL: strip any remote server.url so WebView boots from local dist/
           python3 scripts/force-local-capacitor-assets.py || true
           if [ -f android/variables.gradle ]; then
             sed -i 's/compileSdkVersion *= *[0-9]*/compileSdkVersion = 36/' android/variables.gradle
@@ -231,6 +237,10 @@ jobs:
           mkdir -p "$VALS" "$DRAW"
           cp -f native-android/app/src/main/res/values/colors.xml "$VALS/" 2>/dev/null || true
           cp -f native-android/app/src/main/res/values/styles.xml "$VALS/" 2>/dev/null || true
+          if [ -d native-android/app/src/main/res/values-v31 ]; then
+            mkdir -p android/app/src/main/res/values-v31
+            cp -f native-android/app/src/main/res/values-v31/styles.xml android/app/src/main/res/values-v31/ 2>/dev/null || true
+          fi
           if [ -f "$DRAW/splash.xml" ]; then
             rm -f "$DRAW"/splash.png "$DRAW"/splash.jpg "$DRAW"/splash.webp "$DRAW"/splash.gif
           fi
@@ -241,13 +251,19 @@ jobs:
               sed -i "s|</manifest>|    <uses-permission android:name=\"$perm\" />\n</manifest>|" "$MAN"
             fi
           done
+          # Verify local-first: NO remote server.url in assets config
           if [ -f android/app/src/main/assets/capacitor.config.json ]; then
-            if ! grep -E 'd4exam\.name\.ng|d4exam-platform\.vercel\.app' android/app/src/main/assets/capacitor.config.json; then
-              echo "FATAL: hybrid APK requires server.url to live site (Vercel / d4exam.name.ng)"
+            if grep -E '"url"[[:space:]]*:[[:space:]]*"https?://' android/app/src/main/assets/capacitor.config.json; then
+              echo "FATAL: assets capacitor.config.json must NOT contain server.url"
               cat android/app/src/main/assets/capacitor.config.json || true
               exit 1
             fi
-            echo "OK: hybrid APK assets — live UI + native plugins"
+            if ! grep -q '"hostname"[[:space:]]*:[[:space:]]*"localhost"' android/app/src/main/assets/capacitor.config.json; then
+              echo "FATAL: assets config must use hostname localhost"
+              cat android/app/src/main/assets/capacitor.config.json || true
+              exit 1
+            fi
+            echo "OK: local-first APK assets — NO server.url, hostname=localhost"
           fi
           # Native biometric must be linked after sync
           if ! grep -qi 'capgo-native-biometric\|native-biometric\|NativeBiometric' android/capacitor.settings.gradle android/app/capacitor.build.gradle 2>/dev/null; then
@@ -259,7 +275,7 @@ jobs:
           echo "OK: biometric plugin linked"
           chmod +x android/gradlew
           grep -q 'ExamImmersivePlugin' android/app/src/main/java/com/d4exam/app/MainActivity.java
-          echo "OK: sync complete — hybrid live UI (Vercel) + native plugins (biometric, screen, notif)"
+          echo "OK: sync complete — 100% local-first (dist via localhost) + native plugins"
 
       - name: Build debug APK
         run: |
@@ -323,10 +339,13 @@ jobs:
           body: |
             Sideload install for D4EXAM (not Play Store).
 
-            **Install / Update URL**
-            https://github.com/amurunoghenetejiri/d4exam-platform/releases/download/apk-latest/d4exam.apk
+            **100% local-first offline APK**
+            - Boots from bundled dist/ via https://localhost (NO remote server.url)
+            - Native plugins (fingerprint, screen share, local notifications) stay connected
+            - Student modules cache offline; CBT exams require internet
 
-            Includes fingerprint (NativeBiometric) + multi-account switch fixes.
+            **Install / Update URL**
+            https://github.com/amurunoghenetejiri/d4exam-app2/releases/download/apk-latest/d4exam.apk
 
             Built from commit ${{ github.sha }}
           files: /tmp/apk-out/d4exam.apk
