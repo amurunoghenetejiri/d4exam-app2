@@ -19,10 +19,8 @@
     </style>
 
     <!--
-      Launch theme: solid navy only.
-      Android 12+ always draws a system splash with the adaptive icon unless we
-      override windowSplashScreen* — use a solid navy "icon" so the white logo
-      square never appears. Branded AnimatedSplash (web) takes over after load.
+      Launch theme: navy background + centered D4EXAM logo (layer-list splash.xml).
+      Android 12+ system splash uses the same branded logo drawable.
     -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -30,9 +28,9 @@
         <item name="android:windowBackground">@drawable/splash</item>
         <item name="android:statusBarColor">@color/splash_background</item>
         <item name="android:navigationBarColor">@color/splash_background</item>
-        <!-- API 31+ system splash: solid navy, no centered adaptive icon -->
+        <!-- API 31+ system splash: navy + branded logo -->
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/d4exam_splash_logo</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_background</item>
         <item name="android:windowSplashScreenBrandingImage">@null</item>
     </style>
