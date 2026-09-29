@@ -192,8 +192,126 @@ export type Database = {
           },
         ]
       }
+      course_carryovers: {
+        Row: {
+          course_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          original_level_id: string | null
+          reason: string | null
+          school_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          original_level_id?: string | null
+          reason?: string | null
+          school_id: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          original_level_id?: string | null
+          reason?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_carryovers_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_carryovers_original_level_id_fkey"
+            columns: ["original_level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_carryovers_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_carryovers_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_enrollments: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          school_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          school_id: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          school_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_materials: {
         Row: {
+          converted_pdf_url: string | null
           course_id: string
           created_at: string
           description: string | null
@@ -204,6 +322,8 @@ export type Database = {
           file_url: string | null
           id: string
           material_type: string
+          ocr_status: string | null
+          ocr_text: string | null
           school_id: string
           tags: string | null
           title: string
@@ -213,6 +333,7 @@ export type Database = {
           uploader_role: string
         }
         Insert: {
+          converted_pdf_url?: string | null
           course_id: string
           created_at?: string
           description?: string | null
@@ -223,6 +344,8 @@ export type Database = {
           file_url?: string | null
           id?: string
           material_type?: string
+          ocr_status?: string | null
+          ocr_text?: string | null
           school_id: string
           tags?: string | null
           title: string
@@ -232,6 +355,7 @@ export type Database = {
           uploader_role?: string
         }
         Update: {
+          converted_pdf_url?: string | null
           course_id?: string
           created_at?: string
           description?: string | null
@@ -242,6 +366,8 @@ export type Database = {
           file_url?: string | null
           id?: string
           material_type?: string
+          ocr_status?: string | null
+          ocr_text?: string | null
           school_id?: string
           tags?: string | null
           title?: string
@@ -596,7 +722,9 @@ export type Database = {
       }
       exam_settings: {
         Row: {
+          allow_calculator: boolean
           block_copy_paste: boolean
+          calculator_type: string
           created_at: string
           exam_id: string
           face_detection: boolean
@@ -622,7 +750,9 @@ export type Database = {
           warning_threshold: number
         }
         Insert: {
+          allow_calculator?: boolean
           block_copy_paste?: boolean
+          calculator_type?: string
           created_at?: string
           exam_id: string
           face_detection?: boolean
@@ -648,7 +778,9 @@ export type Database = {
           warning_threshold?: number
         }
         Update: {
+          allow_calculator?: boolean
           block_copy_paste?: boolean
+          calculator_type?: string
           created_at?: string
           exam_id?: string
           face_detection?: boolean
@@ -736,11 +868,13 @@ export type Database = {
           description: string | null
           duration_minutes: number
           id: string
+          questions_to_answer: number | null
           scheduled_end: string | null
           scheduled_start: string | null
           school_id: string
           status: string
           title: string
+          total_marks: number | null
           updated_at: string
         }
         Insert: {
@@ -750,11 +884,13 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          questions_to_answer?: number | null
           scheduled_end?: string | null
           scheduled_start?: string | null
           school_id: string
           status?: string
           title: string
+          total_marks?: number | null
           updated_at?: string
         }
         Update: {
@@ -764,11 +900,13 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          questions_to_answer?: number | null
           scheduled_end?: string | null
           scheduled_start?: string | null
           school_id?: string
           status?: string
           title?: string
+          total_marks?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1097,6 +1235,54 @@ export type Database = {
           },
         ]
       }
+      question_options: {
+        Row: {
+          created_at: string
+          id: string
+          is_correct: boolean
+          option_key: string
+          option_text: string
+          question_id: string
+          school_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          option_key: string
+          option_text: string
+          question_id: string
+          school_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          option_key?: string
+          option_text?: string
+          question_id?: string
+          school_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_options_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       questions: {
         Row: {
           correct_answer: string | null
@@ -1107,6 +1293,7 @@ export type Database = {
           explanation: string | null
           id: string
           marks: number
+          options: Json
           question_text: string
           question_type: string
           school_id: string
@@ -1122,6 +1309,7 @@ export type Database = {
           explanation?: string | null
           id?: string
           marks?: number
+          options?: Json
           question_text: string
           question_type?: string
           school_id: string
@@ -1137,6 +1325,7 @@ export type Database = {
           explanation?: string | null
           id?: string
           marks?: number
+          options?: Json
           question_text?: string
           question_type?: string
           school_id?: string
@@ -1264,6 +1453,42 @@ export type Database = {
           },
         ]
       }
+      school_admins: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_admins_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_admins_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       school_applications: {
         Row: {
           address: string | null
@@ -1348,6 +1573,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           city: string | null
+          code: string | null
           country: string | null
           created_at: string
           id: string
@@ -1369,6 +1595,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           city?: string | null
+          code?: string | null
           country?: string | null
           created_at?: string
           id?: string
@@ -1390,6 +1617,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           city?: string | null
+          code?: string | null
           country?: string | null
           created_at?: string
           id?: string
@@ -1576,6 +1804,77 @@ export type Database = {
           },
         ]
       }
+      student_officer_reports: {
+        Row: {
+          body: string
+          created_at: string
+          exam_id: string | null
+          exam_ids: string[] | null
+          exam_title: string | null
+          exam_titles: string[] | null
+          id: string
+          officer_reply: string | null
+          officer_user_id: string | null
+          replied_at: string | null
+          school_id: string
+          status: string
+          student_id: string | null
+          student_matric: string | null
+          student_name: string | null
+          student_user_id: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          exam_id?: string | null
+          exam_ids?: string[] | null
+          exam_title?: string | null
+          exam_titles?: string[] | null
+          id?: string
+          officer_reply?: string | null
+          officer_user_id?: string | null
+          replied_at?: string | null
+          school_id: string
+          status?: string
+          student_id?: string | null
+          student_matric?: string | null
+          student_name?: string | null
+          student_user_id?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          exam_id?: string | null
+          exam_ids?: string[] | null
+          exam_title?: string | null
+          exam_titles?: string[] | null
+          id?: string
+          officer_reply?: string | null
+          officer_user_id?: string | null
+          replied_at?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string | null
+          student_matric?: string | null
+          student_name?: string | null
+          student_user_id?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_officer_reports_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           academic_session_id: string | null
@@ -1745,6 +2044,7 @@ export type Database = {
           department_id: string | null
           employment_status: string
           faculty_id: string | null
+          full_name: string | null
           id: string
           profile_id: string | null
           school_id: string
@@ -1756,6 +2056,7 @@ export type Database = {
           department_id?: string | null
           employment_status?: string
           faculty_id?: string | null
+          full_name?: string | null
           id?: string
           profile_id?: string | null
           school_id: string
@@ -1767,6 +2068,7 @@ export type Database = {
           department_id?: string | null
           employment_status?: string
           faculty_id?: string | null
+          full_name?: string | null
           id?: string
           profile_id?: string | null
           school_id?: string
@@ -1897,6 +2199,10 @@ export type Database = {
         }[]
       }
       notifications_add_to_realtime: { Args: never; Returns: undefined }
+      resolve_login_email: {
+        Args: { _identifier: string; _school_id: string }
+        Returns: string
+      }
       resolve_login_identity: {
         Args: { _identifier: string; _school_code: string }
         Returns: {
