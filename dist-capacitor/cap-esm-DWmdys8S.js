@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./cap-web-CYF3xR1R.js","./cap-dist-DG4CEogf.js","./cap-rolldown-runtime-DAXXjFlN.js"])))=>i.map(i=>d[i]);
+import{t as e}from"./cap-preload-helper-HclGiUj8.js";import{a as t}from"./cap-dist-DG4CEogf.js";var n=t(`SplashScreen`,{web:()=>e(()=>import(`./cap-web-CYF3xR1R.js`).then(e=>new e.SplashScreenWeb),__vite__mapDeps([0,1,2]),import.meta.url)});export{n as SplashScreen};
