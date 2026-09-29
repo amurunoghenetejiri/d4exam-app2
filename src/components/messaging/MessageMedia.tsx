@@ -621,6 +621,7 @@ export function FileBubble({
 }
 
 export function ImageLightbox({
+  src,
   urls,
   index = 0,
   onClose,
