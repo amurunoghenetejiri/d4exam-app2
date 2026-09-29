@@ -160,45 +160,40 @@ export function FingerprintLockGate() {
 
   // Prevent password keystrokes from reaching focused inputs under the lock overlay
   useEffect(() => {
-    if (!locked) {
-      try {
-        document.documentElement.removeAttribute("data-d4-unlock-inert");
-        document.getElementById("root")?.removeAttribute("inert");
-        document.getElementById("app")?.removeAttribute("inert");
-        const main = document.querySelector("main");
-        main?.removeAttribute("inert");
-      } catch { /* ignore */ }
-      return;
-    }
-    try {
-      const ae = document.activeElement as HTMLElement | null;
-      if (ae && typeof ae.blur === "function" && ae !== document.body) {
-        // blur everything except elements inside the lock portal
-        const inLock = ae.closest?.("[data-d4-lock-gate]");
-        if (!inLock) ae.blur();
-      }
-      document.documentElement.setAttribute("data-d4-unlock-inert", "1");
-      // Mark app shell inert so inputs under the overlay cannot receive focus/input
-      const root = document.getElementById("root") || document.getElementById("app");
-      if (root) root.setAttribute("inert", "");
-      document.querySelectorAll("main, [data-d4-shell]").forEach((el) => {
-        try { el.setAttribute("inert", ""); } catch { /* ignore */ }
-      });
-    } catch { /* ignore */ }
-    return () => {
+    const clearInert = () => {
       try {
         document.documentElement.removeAttribute("data-d4-unlock-inert");
         document.getElementById("root")?.removeAttribute("inert");
         document.getElementById("app")?.removeAttribute("inert");
         document.querySelectorAll("[inert]").forEach((el) => {
-          // only clear ones we likely set - if lock portal is not parent
           if (!(el as HTMLElement).closest?.("[data-d4-lock-gate]")) {
             try { el.removeAttribute("inert"); } catch { /* ignore */ }
           }
         });
       } catch { /* ignore */ }
     };
-  }, [locked]);
+    const onPublic =
+      pathname === "/" ||
+      /^\/(login|forgot-|reset-|auth|school-application|application-status|features|pricing|about|support|privacy)/.test(pathname);
+    if (!locked || onPublic) {
+      clearInert();
+      return;
+    }
+    try {
+      const ae = document.activeElement as HTMLElement | null;
+      if (ae && typeof ae.blur === "function" && ae !== document.body) {
+        const inLock = ae.closest?.("[data-d4-lock-gate]");
+        if (!inLock) ae.blur();
+      }
+      document.documentElement.setAttribute("data-d4-unlock-inert", "1");
+      // Never inert #root (it holds portals, incl. the lock overlay) — only the page content.
+      document.querySelectorAll("main, [data-d4-shell]").forEach((el) => {
+        if ((el as HTMLElement).closest?.("[data-d4-lock-gate]")) return;
+        try { el.setAttribute("inert", ""); } catch { /* ignore */ }
+      });
+    } catch { /* ignore */ }
+    return clearInert;
+  }, [locked, pathname]);
 
   const [failedMsg, setFailedMsg] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "scanning" | "success" | "failed">("idle");

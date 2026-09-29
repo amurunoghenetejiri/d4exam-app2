@@ -26,18 +26,32 @@ function loadLeaflet(): Promise<any> {
       style.textContent = ".leaflet-control-attribution{display:none!important}";
       document.head.appendChild(style);
     }
+    // Never let a slow/blocked CDN hang the page
+    const timer = window.setTimeout(() => reject(new Error("Leaflet load timeout")), 4000);
+    const done = () => {
+      window.clearTimeout(timer);
+      resolve((window as any).L);
+    };
     const existing = document.getElementById("leaflet-js-cdn") as HTMLScriptElement | null;
     if (existing) {
-      existing.addEventListener("load", () => resolve((window as any).L));
-      if ((window as any).L) resolve((window as any).L);
+      existing.addEventListener("load", done);
+      existing.addEventListener("error", () => {
+        window.clearTimeout(timer);
+        reject(new Error("Leaflet failed"));
+      });
+      if ((window as any).L) done();
       return;
     }
     const script = document.createElement("script");
     script.id = "leaflet-js-cdn";
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
     script.async = true;
-    script.onload = () => resolve((window as any).L);
-    script.onerror = () => reject(new Error("Leaflet failed"));
+    script.onload = done;
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      script.remove();
+      reject(new Error("Leaflet failed"));
+    };
     document.head.appendChild(script);
   });
 }
