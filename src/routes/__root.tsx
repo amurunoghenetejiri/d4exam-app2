@@ -36,6 +36,7 @@ import { startAccountVaultKeepAlive } from "@/lib/account-switcher";
 import { notifyWelcomeRole } from "@/lib/email-notify.functions";
 import { isSyntheticStudentEmail } from "@/lib/student-email";
 import { startNativeShellWatcher } from "@/native/platform";
+import { forceUnlockBody } from "@/lib/unlock-ui";
 
 if (typeof window !== "undefined") {
   startNativeShellWatcher();
@@ -411,6 +412,17 @@ function installGlobalErrorHandlers() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const unlockPath = useRouterState({ select: (s) => s.location.pathname });
+  // Freeze guard: release stuck overlay locks after every page change
+  useEffect(() => {
+    forceUnlockBody();
+    const t1 = window.setTimeout(forceUnlockBody, 120);
+    const t2 = window.setTimeout(forceUnlockBody, 450);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [unlockPath]);
   useEffect(() => {
     installGlobalErrorHandlers();
     startAccountVaultKeepAlive();
