@@ -616,7 +616,7 @@ function Page() {
         setComposeOpen(false);
         setInChat(true);
         setLocallyRead(false);
-        await qc.invalidateQueries({ queryKey: ["student-my-reports"] }); setOptimisticMsgs((prev) => prev.filter((m) => m.reportId !== clientId)); try { removeOutbox(clientId); setFailedIds((s) => { const n = new Set(s); n.delete(clientId); return n; }); } catch {}
+        await qc.invalidateQueries({ queryKey: ["student-my-reports"] });
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not send");
       } finally {
@@ -856,7 +856,7 @@ ${replyBody}`
     setClearOpen(false);
     setInChat(false);
     setChatMenuOpen(false);
-    await qc.invalidateQueries({ queryKey: ["student-my-reports"] }); setOptimisticMsgs((prev) => prev.filter((m) => m.reportId !== clientId)); try { removeOutbox(clientId); setFailedIds((s) => { const n = new Set(s); n.delete(clientId); return n; }); } catch {}
+    await qc.invalidateQueries({ queryKey: ["student-my-reports"] });
   }
 
   const filteredShow =

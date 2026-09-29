@@ -22,7 +22,7 @@ import { isOnlineNow } from "@/lib/offline-sync";
 import { enqueueOutbox, removeOutbox, markOutboxFailed, notifyOutbox, listOutbox, canRetry, subscribeOutbox, markOutboxUploading } from "@/lib/message-outbox";
 import { joinMessagingPresence, ticksFor } from "@/lib/messaging-presence";
 import { uploadMessageMedia } from "@/lib/message-media";
-import { VoiceBubble, ImageBubble, ImageLightbox, VoiceRecorderBar, lastSeenLabel, parseMediaUrls, attachmentLabel, encodeOfficerMedia, parseOfficerReply } from "@/components/messaging/MessageMedia";
+import { VoiceBubble, ImageBubble, ImageLightbox, VideoLightbox, VoiceRecorderBar, lastSeenLabel, parseMediaUrls, attachmentLabel, encodeOfficerMedia, parseOfficerReply } from "@/components/messaging/MessageMedia";
 
 export const Route = createFileRoute("/officer/reports")({
   head: () => ({

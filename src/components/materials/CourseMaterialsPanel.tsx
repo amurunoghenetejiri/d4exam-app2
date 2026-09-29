@@ -47,6 +47,19 @@ export function CourseMaterialsPanel({
   const [uploadOpen, setUploadOpen] = useState(false);
   const [viewer, setViewer] = useState<MaterialRow | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
+  async function shareMaterial(m: { title?: string | null; file_url?: string | null }) {
+    const url = m.file_url || "";
+    if (!url) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: m.title || "Study material", url });
+        return;
+      }
+      await navigator.clipboard?.writeText(url);
+    } catch {
+      /* user cancelled */
+    }
+  }
   const [editItem, setEditItem] = useState<MaterialRow | null>(null);
 
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
