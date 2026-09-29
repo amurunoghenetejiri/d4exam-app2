@@ -1,0 +1,10 @@
+{
+  "minVersion": "1.0.0",
+  "latestVersion": "1.0.0",
+  "minBuild": 1,
+  "latestBuild": 1,
+  "apkUrl": "/downloads/d4exam.apk",
+  "forceUpdate": false,
+  "message": "A newer version of D4EXAM is available. Update when you can for the best experience.",
+  "installMessage": "Install the D4EXAM Android app for the full exam experience (camera, mic, screen share)."
+}

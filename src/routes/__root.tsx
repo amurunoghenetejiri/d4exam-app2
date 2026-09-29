@@ -36,7 +36,7 @@ import { startAccountVaultKeepAlive } from "@/lib/account-switcher";
 import { notifyWelcomeRole } from "@/lib/email-notify.functions";
 import { isSyntheticStudentEmail } from "@/lib/student-email";
 import { startNativeShellWatcher } from "@/native/platform";
-import { forceUnlockBody } from "@/lib/unlock-ui";
+import { forceUnlockBody, installUnlockWatchdog } from "@/lib/unlock-ui";
 
 if (typeof window !== "undefined") {
   startNativeShellWatcher();
@@ -423,6 +423,7 @@ function RootComponent() {
       window.clearTimeout(t2);
     };
   }, [unlockPath]);
+  useEffect(() => installUnlockWatchdog(), []);
   useEffect(() => {
     installGlobalErrorHandlers();
     startAccountVaultKeepAlive();
