@@ -423,6 +423,7 @@ function RootComponent() {
       window.clearTimeout(t2);
     };
   }, [unlockPath]);
+  useEffect(() => installUnlockWatchdog(), []);
   useEffect(() => {
     installGlobalErrorHandlers();
     startAccountVaultKeepAlive();
