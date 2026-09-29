@@ -90,6 +90,7 @@ public class MainActivity extends BridgeActivity {
       if (host.contains("d4exam-platform.vercel.app")) return true;
       if (host.endsWith("vercel.app") && host.contains("d4exam")) return true;
       if (host.contains("supabase.co")) return true;
+      if (host.contains("unpkg.com") || host.contains("openstreetmap.org")) return true;
       if (host.contains("googleapis.com") || host.contains("gstatic.com")) return true;
       if (host.contains("firebaseio.com")
           || host.contains("firebasestorage.app")

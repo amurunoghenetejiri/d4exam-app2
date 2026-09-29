@@ -219,13 +219,13 @@ const html = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#0b1b3a" />
     <title>D4EXAM</title>
     ${cssLink}
     <style>
-      html, body { margin: 0; min-height: 100%; background: #0b1b3a; }
-      #root { min-height: 100dvh; }
+      html, body { margin: 0; min-height: 100%; background: #0b1b3a; touch-action: manipulation; -webkit-touch-callout: none; }
+      #root { min-height: 100dvh; touch-action: manipulation; }
       #d4-boot {
         position: fixed; inset: 0; z-index: 99999; display: grid; place-items: center;
         background: #0b1b3a; color: #e2e8f0; font-family: system-ui, sans-serif; text-align: center;

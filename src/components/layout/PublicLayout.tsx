@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { appNavigate } from "@/lib/app-navigate";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { forceUnlockBody } from "@/lib/unlock-ui";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Watermark } from "@/components/brand/Watermark";
@@ -59,26 +60,27 @@ export function PublicLayout({ children }: { children: ReactNode }) {
    * Avoids Radix SheetClose + TanStack Link composition bugs on mobile/WebView
    * where the menu stays open and the route never changes.
    */
+  useEffect(() => {
+    forceUnlockBody();
+    return () => forceUnlockBody();
+  }, []);
+
   function goTo(to: string) {
     setOpen(false);
-    // Let the close animation start, then navigate. Works on Capacitor WebView.
+    // Wait for the Sheet close animation (300ms) so Radix can release its locks.
     window.setTimeout(() => {
+      forceUnlockBody();
       try {
         appNavigate(to);
-        return;
-      } catch {
-        /* fall through */
-      }
-      try {
-        void navigate({ to: to as never });
       } catch {
         try {
-          window.location.assign(to);
+          void navigate({ to: to as never });
         } catch {
           window.location.href = to;
         }
       }
-    }, 80);
+      window.setTimeout(forceUnlockBody, 150);
+    }, 320);
   }
 
   return (

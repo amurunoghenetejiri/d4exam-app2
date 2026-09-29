@@ -65,7 +65,11 @@ export async function registerAndroidBackButton(): Promise<() => void> {
     }
     handle = await App.addListener("backButton", ({ canGoBack }) => {
       try {
-        const path = window.location.pathname || "/";
+        // Local shell uses hash history: real route lives in location.hash
+        const hash = window.location.hash || "";
+        const path = hash.startsWith("#/")
+          ? hash.slice(1).split("?")[0]
+          : window.location.pathname || "/";
         // Close Settings overlays (manual / help) before leaving the page
         try {
           const w = window as unknown as { __d4SettingsOverlayOpen?: boolean };
