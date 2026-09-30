@@ -21,7 +21,7 @@ import { Watermark } from "@/components/brand/Watermark";
 import { InstallAndPushPrompt } from "@/components/InstallAndPushPrompt";
 import { NetworkBanner } from "@/components/NetworkBanner";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { LiteDrawer, useTapThrottle } from "@/components/ui/lite-drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -312,6 +312,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const tapThrottle = useTapThrottle(350);
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const immersiveMessaging =
@@ -477,30 +478,23 @@ export function AppShell({
       >
         <div className="mx-auto grid h-12 max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2.5 sm:h-16 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-            <Sheet open={open} onOpenChange={setOpen} modal>
-              <SheetTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="sa-mobile-menu h-9 w-9 shrink-0 border-white/25 bg-white/5 text-white hover:bg-white/10 hover:text-white lg:hidden"
-                  onClick={() => setOpen(true)}
-                  aria-label="Open menu"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="left"
-                hideClose
-                className={cn(
-                  "flex flex-col gap-0 border-r-0 bg-[#0b1b3a] p-0 text-white",
-                  "!inset-y-0 !top-0 !bottom-0",
-                  "!h-[100dvh] !min-h-[100dvh] !max-h-[100dvh]",
-                  "w-[min(100vw-2rem,18rem)]",
-                )}
-              >
-                <SheetTitle className="sr-only">{config.label} navigation</SheetTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="sa-mobile-menu h-9 w-9 shrink-0 border-white/25 bg-white/5 text-white hover:bg-white/10 hover:text-white lg:hidden"
+              onClick={() => tapThrottle(() => setOpen(true))}
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <LiteDrawer
+              open={open}
+              onClose={() => setOpen(false)}
+              side="left"
+              label={`${config.label} navigation`}
+              className="w-[min(100vw-2rem,18rem)] bg-[#0b1b3a] text-white lg:hidden"
+            >
                 <div className="flex min-h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 px-3 sm:px-4 pt-[env(safe-area-inset-top,0px)]">
                   <div className="min-w-0 flex-1">
                     <PortalBrand
@@ -529,14 +523,13 @@ export function AppShell({
                       setOpen(false);
                       void signOut();
                     }}
-                    className="pressable flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/15 hover:text-red-300 active:scale-[0.98]"
+                    className="pressable flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/15 hover:text-red-300"
                   >
                     <LogOut className="h-4 w-4" aria-hidden />
                     Logout
                   </button>
                 </div>
-              </SheetContent>
-            </Sheet>
+            </LiteDrawer>
 
             <span className="hidden text-sm font-bold tracking-tight text-white lg:inline">
               {config.label} Portal

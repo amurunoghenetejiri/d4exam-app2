@@ -205,6 +205,7 @@ export const getRouter = () => {
   // Android Capacitor APK always uses hash history (local bundled shell at localhost).
   // Public website in Chrome keeps path history (browser history default).
   let history: ReturnType<typeof createBrowserHistory> | ReturnType<typeof createHashHistory> | undefined;
+  let clientOnly = false;
   try {
     if (typeof window !== "undefined") {
       const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
@@ -219,10 +220,12 @@ export const getRouter = () => {
         host === "127.0.0.1" ||
         host === "" ||
         window.location.protocol === "file:";
+      const capSpa = Boolean((window as unknown as { __D4_CAP_SPA?: boolean }).__D4_CAP_SPA);
       // Never use remote website hostname inside APK; always hash for native/local.
-      if (native || localHost) {
+      if (native || localHost || capSpa) {
         history = createHashHistory();
       }
+      clientOnly = capSpa || native;
     }
   } catch {
     /* default history for pure web */
@@ -232,11 +235,12 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     history,
-    scrollRestoration: true,
+    scrollRestoration: !clientOnly,
     defaultPreloadStaleTime: 5 * 60_000,
-    defaultPreload: "intent",
-    defaultPendingMs: 0,
-    defaultPendingMinMs: 120,
+    // APK: no hover/touch preloading — it raced taps and stalled the WebView.
+    defaultPreload: clientOnly ? false : "intent",
+    defaultPendingMs: clientOnly ? 150 : 0,
+    defaultPendingMinMs: clientOnly ? 0 : 120,
     defaultPendingComponent: DefaultPending,
     defaultErrorComponent: DefaultError as never,
   });

@@ -220,9 +220,9 @@ jobs:
           bunx cap sync android
           python3 scripts/ensure-capacitor-plugins.py
           if [ -f android/app/build.gradle ]; then
-            sed -i 's/versionCode [0-9]*/versionCode 46/' android/app/build.gradle || true
-            sed -i 's/versionName "[^"]*"/versionName "1.4.6-touch-freeze-fixed"/' android/app/build.gradle || true
-            echo "OK: versionName 1.4.6-touch-freeze-fixed"
+            sed -i 's/versionCode [0-9]*/versionCode 47/' android/app/build.gradle || true
+            sed -i 's/versionName "[^"]*"/versionName "1.4.7-no-freeze-drawer"/' android/app/build.gradle || true
+            echo "OK: versionName 1.4.7-no-freeze-drawer"
           fi
           # CRITICAL: strip any remote server.url so WebView boots from local dist/
           python3 scripts/force-local-capacitor-assets.py || true
