@@ -42,6 +42,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const tapThrottle = useTapThrottle(350);
+  const navThrottle = useTapThrottle(350);
   const appShell = useMemo(() => {
     try {
       return isAppLikeShell();
@@ -56,7 +57,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
   /** Close the drawer and navigate once — repeat taps within 350ms are ignored. */
   function goTo(to: string) {
-    tapThrottle(() => {
+    navThrottle(() => {
       setOpen(false);
       try {
         appNavigate(to);
