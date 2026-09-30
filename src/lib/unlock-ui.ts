@@ -41,26 +41,14 @@ export function forceUnlockBody(): void {
 }
 
 /**
- * Permanent watchdog: whenever something sets pointer-events:none / scroll-lock
- * on body while no modal is actually open, undo it on the next frame. Also runs
- * on every tap, so a frozen screen self-heals on the very next touch.
+ * Tap-only self-heal. No MutationObserver (it fought Radix dialog lifecycles
+ * in a loop and froze the WebView). Only acts on a real tap when the body is
+ * locked and no modal is genuinely open.
  */
 export function installUnlockWatchdog(): () => void {
   if (typeof window === "undefined") return () => {};
   const w = window as Window & { __d4UnlockWatchdog?: () => void };
   if (w.__d4UnlockWatchdog) return w.__d4UnlockWatchdog;
-
-  let raf = 0;
-  const schedule = () => {
-    if (raf) return;
-    raf = window.requestAnimationFrame(() => {
-      raf = 0;
-      // Give Radix time to finish opening before judging.
-      window.setTimeout(() => {
-        if (!hasOpenModal()) forceUnlockBody();
-      }, 60);
-    });
-  };
 
   const isLocked = () =>
     document.body.style.pointerEvents === "none" ||
@@ -68,28 +56,13 @@ export function installUnlockWatchdog(): () => void {
     document.documentElement.style.pointerEvents === "none" ||
     Boolean(document.getElementById("root")?.hasAttribute("inert"));
 
-  const mo = new MutationObserver(() => {
-    if (isLocked()) schedule();
-  });
-  mo.observe(document.body, { attributes: true, attributeFilter: ["style", "data-scroll-locked", "class"] });
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "data-scroll-locked"] });
-
   const onTouch = () => {
     if (isLocked() && !hasOpenModal()) forceUnlockBody();
   };
   window.addEventListener("pointerdown", onTouch, { capture: true, passive: true });
-  window.addEventListener("touchstart", onTouch, { capture: true, passive: true });
-  window.addEventListener("hashchange", schedule);
-  window.addEventListener("popstate", schedule);
-  document.addEventListener("visibilitychange", schedule);
 
   const dispose = () => {
-    mo.disconnect();
     window.removeEventListener("pointerdown", onTouch, true);
-    window.removeEventListener("touchstart", onTouch, true);
-    window.removeEventListener("hashchange", schedule);
-    window.removeEventListener("popstate", schedule);
-    document.removeEventListener("visibilitychange", schedule);
     w.__d4UnlockWatchdog = undefined;
   };
   w.__d4UnlockWatchdog = dispose;

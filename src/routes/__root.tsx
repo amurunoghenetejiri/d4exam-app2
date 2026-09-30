@@ -313,6 +313,11 @@ const BOOT_SPLASH_SCRIPT = `
 `;
 
 function RootShell({ children }: { children: ReactNode }) {
+  // Phone app (client-only bundle): never render a second <html>/<body> inside
+  // #root — React would take over the real document body and detach the app root.
+  if (typeof window !== "undefined" && (window as unknown as { __D4_CAP_SPA?: boolean }).__D4_CAP_SPA) {
+    return <>{children}</>;
+  }
   const seoJsonLd = {
     "@context": "https://schema.org",
     "@graph": [
