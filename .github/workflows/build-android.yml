@@ -7,6 +7,7 @@ on:
       - "android/**"
       - "native-android/**"
       - "capacitor.config.*"
+      - "vite.capacitor.config.ts"
       - "scripts/prepare-capacitor-dist.mjs"
       - "scripts/force-local-capacitor-assets.py"
       - "scripts/android-apply-icons.sh"
@@ -15,6 +16,7 @@ on:
       - "public/logo.png"
       - "package.json"
       - "bun.lock"
+      - ".env"
       - "src/**"
       - ".github/workflows/build-android.yml"
 
@@ -51,10 +53,47 @@ jobs:
           # Ensure Capgo biometric is present for Capacitor 8
           bun add @capgo/capacitor-native-biometric@^8.6.4 || true
 
+      - name: Ensure Supabase env for SPA build
+        env:
+          # Prefer GitHub Actions secrets when present; fall back to committed .env
+          SECRET_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SECRET_PUB: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SECRET_ANON: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SECRET_PID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          # Load committed .env if secrets are empty
+          if [ -f .env ]; then
+            set -a
+            # shellcheck disable=SC1091
+            source .env || true
+            set +a
+          fi
+          export VITE_SUPABASE_URL="${SECRET_URL:-${VITE_SUPABASE_URL:-${SUPABASE_URL:-}}}"
+          export VITE_SUPABASE_PUBLISHABLE_KEY="${SECRET_PUB:-${VITE_SUPABASE_PUBLISHABLE_KEY:-${SUPABASE_PUBLISHABLE_KEY:-}}}"
+          export VITE_SUPABASE_ANON_KEY="${SECRET_ANON:-${VITE_SUPABASE_ANON_KEY:-${SUPABASE_ANON_KEY:-}}}"
+          export VITE_SUPABASE_PROJECT_ID="${SECRET_PID:-${VITE_SUPABASE_PROJECT_ID:-${SUPABASE_PROJECT_ID:-}}}"
+
+          if [ -z "${VITE_SUPABASE_URL}" ] || [ -z "${VITE_SUPABASE_PUBLISHABLE_KEY}${VITE_SUPABASE_ANON_KEY}" ]; then
+            echo "FATAL: Supabase URL / anon key missing for APK SPA build"
+            echo "Add GitHub secrets VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY (or commit .env)"
+            exit 1
+          fi
+          echo "OK: Supabase URL=${VITE_SUPABASE_URL}"
+          echo "OK: project=${VITE_SUPABASE_PROJECT_ID:-unknown}"
+          # Persist for later steps
+          {
+            echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}"
+            echo "VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}"
+            echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}"
+            echo "VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}"
+          } >> "$GITHUB_ENV"
+
       - name: Build local SPA into dist/ for Capacitor
         run: |
           set -euo pipefail
           # Build local SPA into dist/ for Capacitor webDir (standalone APK, no remote website shell).
+          # VITE_SUPABASE_* already in env from previous step — baked into JS by vite.capacitor.config.ts
           if ! node scripts/prepare-capacitor-dist.mjs; then
             echo "WARN: local SPA build failed — minimal offline shell"
             mkdir -p dist
@@ -64,6 +103,13 @@ jobs:
           if [ -f public/offline.html ]; then cp -f public/offline.html dist/offline.html; fi
           if [ -f public/logo.png ]; then cp -f public/logo.png dist/logo.png; fi
           test -f dist/index.html
+          # Verify Supabase host was inlined into the bundle (login will fail without it)
+          if ! grep -R -q "rqjchjytqcqjmljahcdr\|supabase.co" dist/assets/*.js 2>/dev/null; then
+            echo "FATAL: Supabase URL not found in built SPA — login would always fail"
+            ls -la dist/assets || true
+            exit 1
+          fi
+          echo "OK: Supabase host present in SPA bundle"
           ls -la dist | head -30
 
       - name: Verify Capacitor uses local bundled assets (no remote website shell)
@@ -189,7 +235,6 @@ jobs:
             sed -i '/implementation "androidx.appcompat:appcompat/a\    implementation "androidx.biometric:biometric:1.1.0"' "$BG"
           fi
           grep -q 'androidx.biometric' "$BG"
-          # Ensure Transparent theme for Capgo AuthActivity
           STYLES="android/app/src/main/res/values/styles.xml"
           if [ -f "$STYLES" ] && ! grep -q 'AppTheme.Transparent' "$STYLES"; then
             sed -i 's|</resources>|    <style name="AppTheme.Transparent" parent="Theme.AppCompat.NoActionBar">\n        <item name="android:windowIsTranslucent">true</item>\n        <item name="android:windowBackground">@android:color/transparent</item>\n        <item name="android:windowNoTitle">true</item>\n    </style>\n</resources>|' "$STYLES"
@@ -220,11 +265,10 @@ jobs:
           bunx cap sync android
           python3 scripts/ensure-capacitor-plugins.py
           if [ -f android/app/build.gradle ]; then
-            sed -i 's/versionCode [0-9]*/versionCode 47/' android/app/build.gradle || true
-            sed -i 's/versionName "[^"]*"/versionName "1.4.7-no-freeze-drawer"/' android/app/build.gradle || true
-            echo "OK: versionName 1.4.7-no-freeze-drawer"
+            sed -i 's/versionCode [0-9]*/versionCode 48/' android/app/build.gradle || true
+            sed -i 's/versionName "[^"]*"/versionName "1.4.8-supabase-baked"/' android/app/build.gradle || true
+            echo "OK: versionName 1.4.8-supabase-baked"
           fi
-          # CRITICAL: strip any remote server.url so WebView boots from local dist/
           python3 scripts/force-local-capacitor-assets.py || true
           if [ -f android/variables.gradle ]; then
             sed -i 's/compileSdkVersion *= *[0-9]*/compileSdkVersion = 36/' android/variables.gradle
@@ -244,14 +288,12 @@ jobs:
           if [ -f "$DRAW/splash.xml" ]; then
             rm -f "$DRAW"/splash.png "$DRAW"/splash.jpg "$DRAW"/splash.webp "$DRAW"/splash.gif
           fi
-          # Re-assert biometric permissions after sync (sync may rewrite manifest)
           MAN="android/app/src/main/AndroidManifest.xml"
           for perm in android.permission.USE_BIOMETRIC android.permission.USE_FINGERPRINT android.permission.VIBRATE; do
             if ! grep -q "$perm" "$MAN"; then
               sed -i "s|</manifest>|    <uses-permission android:name=\"$perm\" />\n</manifest>|" "$MAN"
             fi
           done
-          # Verify local-first: NO remote server.url in assets config
           if [ -f android/app/src/main/assets/capacitor.config.json ]; then
             if grep -E '"url"[[:space:]]*:[[:space:]]*"https?://' android/app/src/main/assets/capacitor.config.json; then
               echo "FATAL: assets capacitor.config.json must NOT contain server.url"
@@ -265,17 +307,14 @@ jobs:
             fi
             echo "OK: local-first APK assets — NO server.url, hostname=localhost"
           fi
-          # Native biometric must be linked after sync
           if ! grep -qi 'capgo-native-biometric\|native-biometric\|NativeBiometric' android/capacitor.settings.gradle android/app/capacitor.build.gradle 2>/dev/null; then
             echo "FATAL: biometric plugin missing from gradle"
-            cat android/capacitor.settings.gradle || true
-            cat android/app/capacitor.build.gradle || true
             exit 1
           fi
           echo "OK: biometric plugin linked"
           chmod +x android/gradlew
           grep -q 'ExamImmersivePlugin' android/app/src/main/java/com/d4exam/app/MainActivity.java
-          echo "OK: sync complete — 100% local-first (dist via localhost) + native plugins"
+          echo "OK: sync complete — local-first + Supabase keys baked into SPA"
 
       - name: Build debug APK
         run: |
@@ -339,10 +378,7 @@ jobs:
           body: |
             Sideload install for D4EXAM (not Play Store).
 
-            **100% local-first offline APK**
-            - Boots from bundled dist/ via https://localhost (NO remote server.url)
-            - Native plugins (fingerprint, screen share, local notifications) stay connected
-            - Student modules cache offline; CBT exams require internet
+            **1.4.8-supabase-baked** — VITE_SUPABASE_* baked into SPA for login.
 
             **Install / Update URL**
             https://github.com/amurunoghenetejiri/d4exam-app2/releases/download/apk-latest/d4exam.apk
